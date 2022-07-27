@@ -57,13 +57,13 @@ vars <- c("sitename","rain","snow","prec","qair","temp","patm","vapr","vpd","tar
 vars_meta <- c("species")
 
 #one-hot encoding of the variable 
-meta_df <- df_withspecies%>%select(vars_meta)
+meta_df <- df_withspecies %>% select(vars_meta)
 meta_df <- get_dummies.(data.frame(meta_df))
 
 #seperating two dataframe
 meta_df$site <- df_withspecies$sitename
-sensor_df <- df_withspecies%>%select(vars)
-
+sensor_df <- df_withspecies %>% 
+  select(vars)
 ```
 
 ```{r}
@@ -80,7 +80,7 @@ meta_test <- meta_df[meta_df$site==test_site,]
 # normalisaton
 myrecipe_ddf <- recipe(
   target_var ~ rain + snow + prec + qair + temp + patm + vapr + vpd,
-  data = ddf_train) %>% 
+  data = ddf_train)  %>%  
   step_normalize(all_numeric(), id = "normalize")
 
 pp <- prep(myrecipe_ddf, training = ddf_train)
@@ -209,7 +209,7 @@ n_epochs <- 10
 DEVICE <- if (cuda_is_available()){c("cuda")} else {c("cpu")}
 
 # model parameters
-INPUT_FEATURES <- ncol(ddf_train_norm%>% 
+INPUT_FEATURES <- ncol(ddf_train_norm %>%  
                          select(-c("target_var","sitename")))
 HIDDEN_DIM <- 256
 CONDITIONAL_FEATURES <- ncol(meta_train)-2
@@ -225,21 +225,21 @@ train_sites<-unique(ddf_train_norm$sitename)
 train_list<-vector(mode = "list", length = length(train_sites))
 for (i in 1:length(train_sites)){
   site_df <- ddf_train_norm[ddf_train_norm$sitename==train_sites[i],]
-  train_list[[i]] <- site_df%>%select(-"sitename","target_var")
+  train_list[[i]] <- site_df %>% select(-"sitename","target_var")
 }
 
 # wrap the gpp value by site
 target_train_list <- vector(mode = "list", length = length(train_sites))
 for (i in 1:length(train_sites)){
   site_df <- ddf_train_norm[ddf_train_norm$sitename==train_sites[i],]
-  target_train_list[[i]] <- site_df%>%select("target_var")
+  target_train_list[[i]] <- site_df %>% select("target_var")
 }
 
 # wrap the meta dataset by site
 meta_list <- vector(mode = "list", length = length(train_sites))
 for (i in 1:length(train_sites)){
   meta_df <- meta_train[meta_train$site==train_sites[i],]
-  meta_list[[i]] <- meta_df%>%select(-"site")
+  meta_list[[i]] <- meta_df %>% select(-"site")
 }
 
 # binding them to one big set
@@ -284,18 +284,18 @@ for (epoch in 1:n_epochs){
     y <- training_list$target_train_list
     c <- training_list$meta_list
     
-    x <- torch_tensor(x %>% select(-"target_var") 
-                       %>%as.matrix(), 
+    x <- torch_tensor(x  %>%  select(-"target_var") 
+                        %>% as.matrix(), 
                       dtype = torch_float()
                       )$to(device = DEVICE)
     
     
-    y <- torch_tensor(y %>% 
+    y <- torch_tensor(y  %>%  
                         as.matrix(), 
                       dtype = torch_float()
                       )$to(device = DEVICE)
     
-    c <- torch_tensor(c %>%select(-"species")%>%
+    c <- torch_tensor(c  %>% select(-"species") %>% 
                         as.matrix(), 
                        dtype = torch_float()
                        )$to(device = DEVICE)
@@ -321,18 +321,18 @@ for (epoch in 1:n_epochs){
     
   # pass the test set into the model and compute the R2
   with_no_grad({
-    x <- torch_tensor(ddf_test_norm%>% 
-                                select(-"target_var") %>% 
+    x <- torch_tensor(ddf_test_norm %>%  
+                                select(-"target_var")  %>%  
                                 as.matrix(), # x_test, 
                               dtype = torch_float()
                               )#$cuda()
     
-    y <- torch_tensor(ddf_test_norm%>% 
+    y <- torch_tensor(ddf_test_norm %>%  
                                 as.matrix(), # y_test, 
                               dtype = torch_float()
                               )#$cuda()
             
-    c <- torch_tensor(meta_test%>% select(-c("species","site"))%>%
+    c <- torch_tensor(meta_test %>%  select(-c("species","site")) %>% 
                                 as.matrix(), #conditions
                               dtype = torch_float()
                               )#$cuda()
