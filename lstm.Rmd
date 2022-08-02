@@ -5,8 +5,8 @@ date: '2022-07-18'
 ---
 
 ```{r warning=FALSE, message=FALSE}
-df_phenology <- readRDS("~/Downloads/pheno_lstm/pheno_lstm/df_phenology.rds")
-df_watch <- readRDS("~/Downloads/pheno_lstm/pheno_lstm/df_watch.rds")
+df_phenology <- readRDS("data/df_phenology.rds")
+df_watch <- readRDS("data/df_watch.rds")
 library(data.table)
 library(torch)
 library(tidyverse)
@@ -41,7 +41,7 @@ df_phenology$sos_day <- sos_day
 
 
 ```{r}
-#get a smaller dataset and add a new column named species by the year of that species exist on the site. 
+# get a smaller dataset and add a new column named species by the year of that species exist on the site. 
 selected_sites <- unique(df_phenology$id_site)[1:6]
 df_withspecies <- c()
 
@@ -193,7 +193,8 @@ mymodule_generator_withcondition <- nn_module(
     # take the output in hidden state
     out <- out[[1]]$squeeze(1) # squeeze here is to squeeze on the unused dimension
     
-    # we concatenating the time-invariant variables to the outputs of LSTM when utilizing condition part of the model. 
+    # we concatenating the time-invariant variables to the outputs of LSTM when utilizing 
+    # condition part of the model. 
     if (self$conditional == 1){out <- torch_cat(list(out,c), dim = 2) }
     
     # then this part is the same with last chapter
